@@ -2,5 +2,7 @@ artifacts
 cache
 node_modules
 static/images/
+static/updated-images/
 static/metadata/
+static/updated-metadata/
 .env

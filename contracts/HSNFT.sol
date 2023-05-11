@@ -1,81 +1,139 @@
-// SPDX-License-Identifier: GPL-3.0
-pragma solidity >=0.5.0 <0.9.0;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.15;
 
-import './utils/ExpiryHelper.sol';
-import './utils/HederaResponseCodes.sol';
-import './utils/HederaTokenService.sol';
-import './utils/IHederaTokenService.sol';
-import './utils/KeyHelper.sol';
+import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
+import '@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 
-contract HederaSoulboundNFTManager is
-	Ownable,
-	ExpiryHelper,
-	KeyHelper,
-	HederaTokenService
-{
-	function createNft(
-		string memory name,
-		string memory symbol,
-		string memory memo,
-		int64 autoRenewPeriod
-	) external payable onlyOwner returns (address) {
-		IHederaTokenService.TokenKey[] memory keys = new IHederaTokenService.TokenKey[](4);
-		// Set this contract as supply for the token
-		keys[0] = getSingleKey(KeyType.ADMIN, KeyValueType.CONTRACT_ID, address(this));
-		keys[1] = getSingleKey(KeyType.SUPPLY, KeyValueType.CONTRACT_ID, address(this));
-		keys[2] = getSingleKey(KeyType.FREEZE, KeyValueType.CONTRACT_ID, address(this));
-		keys[3] = getSingleKey(KeyType.WIPE, KeyValueType.CONTRACT_ID, address(this));
+/**
+ * @title HederaSoulboundNFT
+ * @dev This contract implements the ERC721 soulbound non-fungible tokens,
+ *      with URI storage functionality and is owned by a designated address.
+ */
+contract HederaSoulboundNFT is ERC721, ERC721URIStorage, Ownable {
+	event Attest(address indexed to, uint256 indexed tokenId);
+	event Revoke(address indexed to, uint256 indexed tokenId);
 
-		IHederaTokenService.HederaToken memory token;
-		token.name = name;
-		token.symbol = symbol;
-		token.memo = memo;
-		token.treasury = address(this);
-		token.tokenSupplyType = false;
-		token.tokenKeys = keys;
-		token.freezeDefault = true;
-		token.expiry = createAutoRenewExpiry(address(this), autoRenewPeriod); // Contract auto-renews the token
-		(int responseCode, address createdToken) = HederaTokenService.createNonFungibleToken(
-			token
-		);
+	/**
+	 * @dev Constructs a new instance of the HederaSoulboundNFT contract
+	 *      with a name as "Hedera Soulbound NFT" and symbol as "HSNFT".
+	 */
+	constructor() ERC721('Hedera Soulbound NFT', 'HSNFT') {}
 
-		require(
-			responseCode == HederaResponseCodes.SUCCESS,
-			'Failed to create non-fungible token'
-		);
-
-		return createdToken;
+	/**
+	 * @dev Burns a specific token.
+	 * @param tokenId uint256 ID of the token being burned
+	 * Requirements:
+	 * - The caller must be the owner of the token being burned.
+	 */
+	function burn(uint256 tokenId) external {
+		require(ownerOf(tokenId) == msg.sender, 'Only owner of the token can burn it');
+		_burn(tokenId);
 	}
 
-	function mintNft(
-		address token,
-		bytes[] memory metadata
-	) external onlyOwner returns (int64) {
-		(int response, , int64[] memory serial) = HederaTokenService.mintToken(
-			token,
-			0,
-			metadata
-		);
-
-		require(response == HederaResponseCodes.SUCCESS, 'Failed to mint non-fungible token');
-
-		return serial[0];
+	/**
+	 * @dev Revokes a specific token.
+	 * @param tokenId uint256 ID of the token being revoked
+	 * Requirements:
+	 * - Only the contract owner can revoke the token.
+	 */
+	function revoke(uint256 tokenId) external onlyOwner {
+		_burn(tokenId);
 	}
 
-	function transferNft(
-		address token,
-		address receiver,
-		int64 serial
-	) external onlyOwner returns (int) {
-		HederaTokenService.unfreezeToken(token, receiver);
-		int response = HederaTokenService.transferNFT(token, address(this), receiver, serial);
+	/**
+	 * @dev Updates a specific token URI.
+	 * @param tokenId uint256 ID of the token being updated
+	 * @param uri string URI to assign
+	 * Requirements:
+	 * - Only the contract owner can update the token URI.
+	 */
+	function updateTokenURI(uint256 tokenId, string memory uri) external onlyOwner {
+		_setTokenURI(tokenId, uri);
+	}
 
+	/**
+	 * @dev Safely mints a new NFT and assigns its `tokenId` to `to`, updating metadata at the given URI.
+	 * @param tokenId uint256 ID of the token to be minted
+	 * @param to address of the future owner of the token
+	 * @param uri string URI representing the metadata for the newly-minted token
+	 * Requirements:
+	 * - Only the contract owner can mint a new token.
+	 * Returns:
+	 * - The `tokenId` that was created during the minting process.
+	 */
+	function safeMint(
+		uint256 tokenId,
+		address to,
+		string memory uri
+	) public onlyOwner returns (uint256) {
+		_safeMint(to, tokenId);
+		_setTokenURI(tokenId, uri);
+		return tokenId;
+	}
+
+	/**
+	 * @dev Overrides the default tokenURI() function from ERC721URIStorage.sol to provide metadata for a given token ID.
+	 * @param tokenId uint256 ID of the token whose metadata is being queried
+	 * Returns:
+	 * - The metadata associated with the given `tokenId`.
+	 */
+	function tokenURI(
+		uint256 tokenId
+	) public view override(ERC721, ERC721URIStorage) returns (string memory) {
+		return super.tokenURI(tokenId);
+	}
+
+	/**
+	 * @dev Hook function called by the ERC721 contract before a token is transferred.
+	 * Throws an error if the transfer is not allowed.
+	 * @param from address of the sender
+	 * @param to address of the recipient
+	 * Requirements:
+	 * - Transfer must be mint, burn or initial transaction from contract owner
+	 * Throws:
+	 * - Error if transfer is not allowed.
+	 */
+	function _beforeTokenTransfer(
+		address from,
+		address to,
+		uint256,
+		uint256
+	) internal view override {
 		require(
-			response == HederaResponseCodes.SUCCESS,
-			'Failed to transfer non-fungible token'
+			from == address(0) || from == owner() || to == address(0),
+			'Not allowed to transfer token'
 		);
-		HederaTokenService.freezeToken(token, receiver);
-		return response;
+	}
+
+	/**
+	 * @dev Hook function called by the ERC721 contract after a token is transferred.
+	 * Emits an `Attest` event if the sender was the owner, or a `Revoke` event if the recipient is 0x0.
+	 * @param from address of the sender
+	 * @param to address of the recipient
+	 * @param firstTokenId uint256 ID of the first token being transferred
+	 * Requirements: None
+	 * Throws: Nothing
+	 */
+	function _afterTokenTransfer(
+		address from,
+		address to,
+		uint256 firstTokenId,
+		uint256
+	) internal override {
+		if (from == owner()) {
+			emit Attest(to, firstTokenId);
+		} else if (to == address(0)) {
+			emit Revoke(to, firstTokenId);
+		}
+	}
+
+	/**
+	 * @dev Deletes a given token from the system by overriding the internal `_burn` function of the parent ERC721 and ERC721URIStorage contracts.
+	 * The caller must be an authorized owner. Emits a `Transfer` event on successful execution.
+	 * @param tokenId uint256 ID of the token being burned
+	 */
+	function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
+		super._burn(tokenId);
 	}
 }

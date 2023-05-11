@@ -5,36 +5,33 @@ const path = require('path');
 require('dotenv').config();
 
 // Set up Infura IPFS API endpoint
-const endpoint = process.env.INFURA_END_POINT;
-const projectId = process.env.INFURA_API_KEY;
-const projectSecret = process.env.INFURA_SECRET;
+const { INFURA_END_POINT, INFURA_API_KEY, INFURA_SECRET } = process.env;
 
-const authorization = { username: projectId, password: projectSecret };
-const folderPath = './static/images';
-
-const main = async () => {
-	await uploadImagesToIPFS();
-};
+const authorization = { username: INFURA_API_KEY, password: INFURA_SECRET };
 
 // Function to pin a folder to IPFS
-const uploadImagesToIPFS = async () => {
+exports.uploadFolderToIPFS = async (dirPath) => {
 	try {
 		const form = new FormData();
 		const files = await getFilesFromFolder();
 		for (const file of files) {
-			const relativePath = path.relative(folderPath, file);
+			const relativePath = path.relative(dirPath, file);
 			form.append('file', fs.createReadStream(file), {
 				filename: relativePath,
 			});
 		}
-		const response = await axios.post(`${endpoint}/add?wrap-with-directory=true`, form, {
-			headers: {
-				...form.getHeaders(),
-			},
-			auth: authorization,
-		});
+		const response = await axios.post(
+			`${INFURA_END_POINT}/add?wrap-with-directory=true`,
+			form,
+			{
+				headers: {
+					...form.getHeaders(),
+				},
+				auth: authorization,
+			}
+		);
 		console.log('File Hashes :', response.data);
-		console.log(`Uploaded images to IPFS Successfully.`);
+		console.log(`Uploaded folder to IPFS Successfully.`);
 	} catch (error) {
 		console.error(`Failed to pin folder to IPFS: ${error.message}`);
 	}
@@ -42,8 +39,8 @@ const uploadImagesToIPFS = async () => {
 
 const getFilesFromFolder = async () => {
 	const files = [];
-	for await (const dirEntry of fs.opendirSync(folderPath)) {
-		const fullPath = path.join(folderPath, dirEntry.name);
+	for await (const dirEntry of fs.opendirSync(dirPath)) {
+		const fullPath = path.join(dirPath, dirEntry.name);
 		if (dirEntry.isFile()) {
 			files.push(fullPath);
 		} else if (dirEntry.isDirectory()) {
@@ -53,5 +50,3 @@ const getFilesFromFolder = async () => {
 	}
 	return files;
 };
-
-main();
