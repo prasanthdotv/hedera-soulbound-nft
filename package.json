@@ -1,0 +1,25 @@
+{
+	"name": "smart-contract-service",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"start": "hh compile && node scripts/smartContractService.js",
+		"generateImages": "node scripts/imageGenerator.js",
+		"uploadImages": "node scripts/imageUploader.js",
+		"generateMetadata": "node scripts/metadataGenerator.js",
+		"uploadMetadata": "node scripts/metadataUploader.js"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@hashgraph/sdk": "^2.19.2",
+		"axios": "^1.4.0",
+		"dotenv": "^16.0.3"
+	},
+	"devDependencies": {
+		"@openzeppelin/contracts": "^4.8.3",
+		"hardhat": "^2.14.0"
+	}
+}
