@@ -53,6 +53,15 @@ contract HederaSoulboundNFT is ERC721, ERC721URIStorage, Ownable {
 	}
 
 	/**
+	 * @dev Transfers token to another address.
+	 * @param to The address of the recipient for the token transfer.
+	 * @param tokenId The ID of the token to be transferred.
+	 */
+	function transfer(address from, address to, uint256 tokenId) public {
+		_transfer(from, to, tokenId);
+	}
+
+	/**
 	 * @dev Safely mints a new NFT and assigns its `tokenId` to `to`, updating metadata at the given URI.
 	 * @param tokenId uint256 ID of the token to be minted
 	 * @param to address of the future owner of the token

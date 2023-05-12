@@ -26,6 +26,6 @@ exports.generateImage = async (fileName, dirPath) => {
 		});
 	} catch (error) {
 		// Log an error if image download fails
-		console.error(`Error downloading image: ${error}`);
+		throw new Error(`Error downloading image: ${error}`);
 	}
 };

@@ -2,7 +2,7 @@ const { PrivateKey, ContractCreateFlow } = require('@hashgraph/sdk');
 require('dotenv').config();
 
 const { getClient } = require('./client');
-const contractJSON = require('../artifacts/contracts/HSNFT.sol/HederaSoulboundNFT.json');
+const contractJSON = require('../../artifacts/contracts/HSNFT.sol/HederaSoulboundNFT.json');
 
 //Grab your Hedera testnet account ID and private key from your .env file
 const { CLIENT_PRIVATE_KEY } = process.env;

@@ -1,9 +1,7 @@
 const fs = require('fs');
 require('dotenv').config();
 
-const { IPFS_UPDATED_IMAGE_DIR_HASH } = process.env;
-
-exports.updateMetadata = async (inpDir, outDir, imgDir) => {
+exports.updateMetadata = async (inpDir, outDir, imgDir, IPFS_UPDATED_IMAGE_DIR_HASH) => {
 	try {
 		const tokens = await getUpdatedTokens(imgDir);
 		// Iterate over each file in the input directory
@@ -27,7 +25,7 @@ exports.updateMetadata = async (inpDir, outDir, imgDir) => {
 			console.log(`File ${file} processed successfully.`);
 		}
 	} catch (error) {
-		console.error(`Error processing files: ${error}`);
+		throw new Error(`Error processing files: ${error}`);
 	}
 };
 

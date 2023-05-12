@@ -1,10 +1,10 @@
 {
 	"name": "hedera-soulbound-token",
 	"version": "1.0.0",
-	"description": "",
+	"description": "Hedera Soulbound Token Contract along with scripts to manage it.",
 	"main": "index.js",
 	"scripts": {
-		"init": "node scripts/1_initialSetup.js",
+		"init": "hh compile && node scripts/1_initialSetup.js",
 		"mint": "hh compile && node scripts/2_mintTokens.js",
 		"updateMetadata": "node scripts/3_updatePreparation.js",
 		"updateTokens": "node scripts/4_updateTokens.js"
@@ -12,13 +12,11 @@
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
-	"dependencies": {
-		"@hashgraph/sdk": "^2.19.2",
-		"axios": "^1.4.0",
-		"dotenv": "^16.0.3"
-	},
 	"devDependencies": {
+		"@hashgraph/sdk": "^2.24.2",
 		"@openzeppelin/contracts": "^4.8.3",
+		"axios": "^1.4.0",
+		"dotenv": "^16.0.3",
 		"hardhat": "^2.14.0"
 	}
 }

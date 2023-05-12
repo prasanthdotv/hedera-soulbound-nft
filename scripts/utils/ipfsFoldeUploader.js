@@ -13,7 +13,7 @@ const authorization = { username: INFURA_API_KEY, password: INFURA_SECRET };
 exports.uploadFolderToIPFS = async (dirPath) => {
 	try {
 		const form = new FormData();
-		const files = await getFilesFromFolder();
+		const files = await getFilesFromFolder(dirPath);
 		for (const file of files) {
 			const relativePath = path.relative(dirPath, file);
 			form.append('file', fs.createReadStream(file), {
@@ -30,14 +30,25 @@ exports.uploadFolderToIPFS = async (dirPath) => {
 				auth: authorization,
 			}
 		);
-		console.log('File Hashes :', response.data);
+		let folderHash;
+		const objects = response.data.split('\n');
+		for (let obj of objects) {
+			if (obj.trim() === '') continue; // Skip empty strings
+			const parsedObj = JSON.parse(obj);
+			if (parsedObj.Name === '') {
+				folderHash = parsedObj.Hash;
+				break; // Exit the loop after finding the first match
+			}
+		}
 		console.log(`Uploaded folder to IPFS Successfully.`);
+		console.log('Folder Hash :', folderHash);
+		return folderHash;
 	} catch (error) {
-		console.error(`Failed to pin folder to IPFS: ${error.message}`);
+		throw new Error(`Failed to pin folder to IPFS: ${error.message}`);
 	}
 };
 
-const getFilesFromFolder = async () => {
+const getFilesFromFolder = async (dirPath) => {
 	const files = [];
 	for await (const dirEntry of fs.opendirSync(dirPath)) {
 		const fullPath = path.join(dirPath, dirEntry.name);

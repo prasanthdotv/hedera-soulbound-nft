@@ -6,3 +6,5 @@ static/updated-images/
 static/metadata/
 static/updated-metadata/
 .env
+*.json
+*.jpg

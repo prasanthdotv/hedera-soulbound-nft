@@ -8,22 +8,25 @@ require('dotenv').config();
 
 const { getClient } = require('./client');
 
-//Grab your Hedera testnet account ID and private key from your .env file
 const { INITIAL_SUPPLY, IPFS_METADATA_DIR_HASH, CLIENT_ID } = process.env;
 
+/**
+ * Mint NFTs with specified metadata for a given contract
+ * @param {string} CONTRACT_ID - The ID of the contract to mint the NFTs on
+ */
 exports.mintNFTs = async (CONTRACT_ID) => {
 	const client = await getClient();
 
+	// Loop through the initial supply and mint each NFT with specified metadata
 	for (let i = 0; i < INITIAL_SUPPLY; i++) {
-		// Mint NFT
 		const mintToken = new ContractExecuteTransaction()
 			.setContractId(CONTRACT_ID)
 			.setGas(4000000)
-			.setMaxTransactionFee(new Hbar(20)) //Use when HBAR is under 10 cents
+			.setMaxTransactionFee(new Hbar(20)) // Use when HBAR is under 10 cents
 			.setFunction(
 				'safeMint',
 				new ContractFunctionParameters()
-					.addUint256(i)
+					.addUint256(i) // Token ID
 					.addAddress(AccountId.fromString(CLIENT_ID).toSolidityAddress()) // Token address
 					.addString(`ipfs://${IPFS_METADATA_DIR_HASH}/${i}.json`) // Metadata
 			);
