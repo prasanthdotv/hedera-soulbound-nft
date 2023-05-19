@@ -41,8 +41,8 @@ const main = async () => {
 		await createNFT();
 	}
 	await mintNFTs();
-	// await associateNFT();
-	// await transferNFT();
+	await associateNFT();
+	await transferNFT();
 	// await transferNFTWithSDK();
 
 	process.exit();

@@ -1,8 +1,8 @@
 const axios = require('axios');
 const fs = require('fs');
+require('dotenv').config();
 
-const url = 'https://picsum.photos/700'; // replace with your image URL
-const filePath = `./static/images`; // replace with the file path where you want to save the image
+const { INITIAL_SUPPLY, IMAGE_DOWNLOAD_URL, IMAGE_DIR_PATH } = process.env;
 
 const main = async () => {
 	await generateImages(100);
@@ -10,13 +10,13 @@ const main = async () => {
 
 const generateImages = async (count) => {
 	try {
-		for (let i = 100; i < 101; i++) {
+		for (let i = 1; i <= INITIAL_SUPPLY; i++) {
 			const response = await axios({
 				method: 'get',
-				url: url,
+				url: IMAGE_DOWNLOAD_URL,
 				responseType: 'stream',
 			});
-			const file = fs.createWriteStream(`${filePath}/${i}.jpg`);
+			const file = fs.createWriteStream(`${IMAGE_DIR_PATH}/${i}.jpg`);
 			response.data.pipe(file);
 
 			file.on('finish', () => {
